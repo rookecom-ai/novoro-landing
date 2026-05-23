@@ -206,14 +206,16 @@ function SocialProof() {
 
 const EMPTY_FORM = {
   first_name: '', last_name: '', email: '',
+  company_name: '',
   sector: '', sector_other: '',
   business_description: '',
   monthly_revenue: '',
   team_size: '',
   biggest_bottleneck: '', bottleneck_other: '',
+  timeline: '',
 };
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 8;
 
 function ProgressBar({ step }) {
   return (
@@ -251,7 +253,7 @@ function CalEmbed({ formData }) {
         theme: "dark",
         name: `${formData.first_name} ${formData.last_name}`.trim(),
         email: formData.email,
-        notes: `Sector: ${formData.sector} | Revenue: ${formData.monthly_revenue} | Team: ${formData.team_size} | Bottleneck: ${formData.biggest_bottleneck}`,
+        notes: `Company: ${formData.company_name || 'n/a'} | Sector: ${formData.sector} | Revenue: ${formData.monthly_revenue} | Team: ${formData.team_size} | Bottleneck: ${formData.biggest_bottleneck} | Timeline: ${formData.timeline}`,
       },
     });
 
@@ -348,6 +350,8 @@ function OnboardingForm() {
       case 4: return formData.monthly_revenue !== '';
       case 5: return formData.team_size !== '';
       case 6: return formData.biggest_bottleneck !== '';
+      case 7: return formData.timeline !== '';
+      case 8: return true;
       default: return false;
     }
   };
@@ -410,6 +414,13 @@ function OnboardingForm() {
     'Other',
   ];
 
+  const TIMELINES = [
+    'ASAP — this is costing us now',
+    'Within 1–3 months',
+    '3–6 months',
+    'Just exploring for now',
+  ];
+
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -449,6 +460,14 @@ function OnboardingForm() {
               onChange={e => update('email', e.target.value)}
               placeholder="john@company.com"
               onKeyDown={e => { if (e.key === 'Enter' && canProceed()) goNext(); }}
+            />
+            <label className="onboarding-input-label">Company Name</label>
+            <input
+              className="onboarding-input"
+              type="text"
+              value={formData.company_name}
+              onChange={e => update('company_name', e.target.value)}
+              placeholder="Acme Corp"
             />
             <div className="onboarding-nav">
               <span />
@@ -577,7 +596,7 @@ function OnboardingForm() {
       case 6:
         return (
           <div key="step-6" className={`onboarding-card ${animClass}`}>
-            <p className="onboarding-progress-label">Step 6 of {TOTAL_STEPS} &mdash; Final Step</p>
+            <p className="onboarding-progress-label">Step 6 of {TOTAL_STEPS} &mdash; Bottleneck</p>
             <ProgressBar step={step} />
             <h2 className="onboarding-question">What&rsquo;s your biggest operational bottleneck?</h2>
             <div className="onboarding-cards">
@@ -603,13 +622,57 @@ function OnboardingForm() {
                 />
               </div>
             )}
+            <div className="onboarding-nav">
+              <button className="onboarding-back" onClick={goBack}>&larr; Back</button>
+              <button className="btn-primary btn-shimmer" onClick={goNext} disabled={!canProceed()}>
+                Continue &rarr;
+              </button>
+            </div>
+          </div>
+        );
+
+      case 7:
+        return (
+          <div key="step-7" className={`onboarding-card ${animClass}`}>
+            <p className="onboarding-progress-label">Step 7 of {TOTAL_STEPS} &mdash; Timeline</p>
+            <ProgressBar step={step} />
+            <h2 className="onboarding-question">What&rsquo;s your timeline for getting this fixed?</h2>
+            <div className="onboarding-cards">
+              {TIMELINES.map(t => (
+                <button
+                  key={t}
+                  className={`onboarding-card-option ${formData.timeline === t ? 'selected' : ''}`}
+                  onClick={() => update('timeline', t)}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div className="onboarding-nav">
+              <button className="onboarding-back" onClick={goBack}>&larr; Back</button>
+              <button className="btn-primary btn-shimmer" onClick={goNext} disabled={!canProceed()}>
+                Continue &rarr;
+              </button>
+            </div>
+          </div>
+        );
+
+      case 8:
+        return (
+          <div key="step-8" className={`onboarding-card ${animClass}`}>
+            <p className="onboarding-progress-label">Step 8 of {TOTAL_STEPS} &mdash; Final Step</p>
+            <ProgressBar step={step} />
+            <h2 className="onboarding-question">You&rsquo;re all set &mdash; pick your time.</h2>
+            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '15px', fontFamily: 'var(--font-body)', marginTop: '-16px', marginBottom: '8px', lineHeight: 1.6 }}>
+              We&rsquo;ll have your responses reviewed before the call. Hit the button below to see available slots.
+            </p>
             {error && <div className="onboarding-error">{error}</div>}
             <div className="onboarding-nav">
               <button className="onboarding-back" onClick={goBack}>&larr; Back</button>
               <button
                 className="btn-primary btn-shimmer"
                 onClick={handleSubmit}
-                disabled={!canProceed() || submitting}
+                disabled={submitting}
               >
                 {submitting ? 'Analyzing your operations…' : 'See Available Times →'}
               </button>
@@ -632,6 +695,13 @@ function OnboardingForm() {
 }
 
 export default function App() {
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+
   return (
     <div style={{ position: 'relative', overflowX: 'hidden' }}>
       <Navbar />
